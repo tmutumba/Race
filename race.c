@@ -21,11 +21,12 @@
 
 int i;
 
-pthread_mutex_t lock;
+pthread_mutex_t m = PTHREAD_MUTEX_INITIALIZER;
 
 void *foo (void *bar) {
     printf("in a foo thread, ID %ld\n", (long) pthread_self());
-    pthread_mutex_lock(&lock);
+
+    assert(pthread_mutex_lock(&m) ==0);
 
     for (i = 0; i < *((int *) bar); i++) {
         int tmp = i;
@@ -35,7 +36,7 @@ void *foo (void *bar) {
         }
     }
 
-    pthread_mutex_unlock(&lock);
+    assert(pthread_mutex_unlock(&m) ==0);
     pthread_exit ((void *)pthread_self());
 }
 
@@ -51,16 +52,16 @@ int main(int argc, char **argv)
     assert(iterations > 0);
 
     pthread_t threads[NUM_THREADS];
-    pthread_mutex_init(&lock, NULL);
+    pthread_mutex_init(&m, NULL);
 
-    for (int i = 0; i < NUM_THREADS; i++) {
+    for ( i = 0; i < NUM_THREADS; i++) {
         if (pthread_create(&threads[i], NULL, foo, (void *) &iterations)) {
             perror ("pthread_create");
             return (1);
         }
     }
 
-    for (int i = 0; i < NUM_THREADS; i++) {
+    for ( i = 0; i < NUM_THREADS; i++) {
         void *status;
         if (pthread_join (threads[i], &status)) {
             perror ("pthread_join");
@@ -69,6 +70,6 @@ int main(int argc, char **argv)
         printf("joined a foo thread, number %ld\n", (long) status);
     }
 
-    pthread_mutex_destroy(&lock);
+    assert(pthread_mutex_destroy(&m) ==0);
     return (0);
 }
